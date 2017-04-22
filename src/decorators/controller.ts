@@ -1,13 +1,15 @@
 
-import {instantiate} from "../utils/instantiate";
+import {getFuncName} from "../utils/getFuncName";
 import {IClassAnnotationDecorator} from "../interfaces/interfaces";
 
 /**
  * Annotation Controller to create an angular controller.
- * @param moduleName
- * @param ctrlName
- * @returns {IClassAnnotationDecorator}
+ * @param name
+ * @returns {any}
  */
-export function Controller(moduleName: string, ctrlName?: string): IClassAnnotationDecorator {
-    return instantiate(moduleName, "controller", ctrlName);
+export function Controller(name?: string): IClassAnnotationDecorator {
+    return (target) => {
+        target.$ngType = "controller";
+        target.$settings = {name: name || getFuncName(target)};
+    };
 }

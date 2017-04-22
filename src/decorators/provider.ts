@@ -6,17 +6,18 @@ import {IClassAnnotationDecorator} from "../interfaces/interfaces";
 import {getFuncName} from "../utils/getFuncName";
 /**
  * Directive annotation to create an angular directive.
- * @param moduleName
- * @param settings
+ * @param name
  * @returns {function(any): void}
  */
 export function Provider(
-    moduleName: string,
-    className?: string
-): IClassAnnotationDecorator {
+    name: string
+): any {
     return (target: any): void => {
 
-        pushBuilder(moduleName, app => app.provider(className || getFuncName(target), new target()));
+        target.$ngType = "providers";
+        target.$settings = {name: name};
+
+        // pushBuilder(moduleName, app => app.provider(className || getFuncName(target), new target()));
 
     };
 }

@@ -2,16 +2,15 @@
 import {getFuncName} from "../utils/getFuncName";
 import {IClassAnnotationDecorator} from "../interfaces/interfaces";
 /**
- * Annotation to create Enumerable angular type.
+ * Directive annotation to create an angular directive.
  * @param name
  * @returns {function(any): void}
  */
-export function Enumerable(name?: string): IClassAnnotationDecorator {
-
+export function Filter(
+    name?: string
+): IClassAnnotationDecorator {
     return (target: any): void => {
-
-        target.$ngType = "enumarable";
+        target.$ngType = "filter";
         target.$settings = {name: name || getFuncName(target)};
-
     };
 }

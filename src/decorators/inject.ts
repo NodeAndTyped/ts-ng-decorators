@@ -14,7 +14,7 @@ export function Inject(...injects: string[]): IClassAnnotationDecorator {
             return descriptor;
         }
 
-        let index: number = <number> args[1];
+        const index: number = <number> args[1];
 
         if (args[0] !== undefined) {
             let method = target[args[0]];

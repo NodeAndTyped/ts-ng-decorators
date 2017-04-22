@@ -6,11 +6,11 @@ import {IClassAnnotationDecorator} from "../interfaces/interfaces";
  * @param name
  * @returns {function(any): void}
  */
-export function Enumerable(name?: string): IClassAnnotationDecorator {
+export function Constant(name?: string): IClassAnnotationDecorator {
 
     return (target: any): void => {
 
-        target.$ngType = "enumarable";
+        target.$ngType = "constant";
         target.$settings = {name: name || getFuncName(target)};
 
     };
