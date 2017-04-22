@@ -1,0 +1,19 @@
+export const directiveProperties: string[] = [
+    "compile",
+    "controller",
+    "controllerAs",
+    "bindToController",
+    "bindings",
+    "link",
+    "priority",
+    "replace",
+    "require",
+    "restrict",
+    "scope",
+    "template",
+    "templateUrl",
+    "terminal",
+    "transclude",
+    "multiElement",
+    "$$tlb"
+];
