@@ -1,6 +1,15 @@
-import {IClassAnnotationDecorator} from "../interfaces/interfaces";
+/**
+ * @module decorators
+ */  /** */
 
-export function Inject(...injects: string[]): IClassAnnotationDecorator {
+import {IClassDecorator} from "../interfaces/interfaces";
+/**
+ *
+ * @param injects
+ * @returns {(target:any, ...args:any[])=>(void|TypedPropertyDescriptor<any>)}
+ * @decorator
+ */
+export function Inject(...injects: string[]): IClassDecorator {
 
     return (target: any, ...args: any[]): void | TypedPropertyDescriptor<any> => {
 

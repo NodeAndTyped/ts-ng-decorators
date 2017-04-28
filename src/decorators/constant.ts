@@ -1,17 +1,22 @@
+/**
+ * @module decorators
+ */  /** */
 
-import {getFuncName} from "../utils/getFuncName";
-import {IClassAnnotationDecorator} from "../interfaces/interfaces";
+import {getFuncName} from "./../utils";
+import {IClassDecorator, Constructor} from "../interfaces/interfaces";
+import Metadata from "../utils/Metadata";
 /**
  * Annotation to create Enumerable angular type.
+ * @decorator
  * @param name
  * @returns {function(any): void}
  */
-export function Constant(name?: string): IClassAnnotationDecorator {
+export function Constant(name?: string): IClassDecorator {
 
-    return (target: any): void => {
+    return <T extends Constructor<{}>> (target: T) => {
 
-        target.$ngType = "constant";
-        target.$settings = {name: name || getFuncName(target)};
+        Metadata.set("ng:type", "constant", target);
+        Metadata.set("ng:settings",  {name: name || getFuncName(target)}, target);
 
     };
 }

@@ -1,0 +1,12 @@
+# Created by .ignore support plugin (hsz.mobi)
+docs
+conf
+test
+.gitignore
+.gulpfile
+tslint.json
+yarn.lock
+yarn-error.log
+
+src/**/*.js
+src/**/*.js.map

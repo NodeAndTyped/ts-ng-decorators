@@ -62,5 +62,5 @@ typings/
 
 src/**/*.js
 src/**/*.js.map
-test/**/*.js
-test/**/*.js.map
+!src/index.spec.js
+/lib/

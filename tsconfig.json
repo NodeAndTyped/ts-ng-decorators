@@ -5,15 +5,27 @@
     "target": "es5",
     "noImplicitAny": false,
     "sourceMap": true,
+    "inlineSources": true,
     "declaration":false,
     "experimentalDecorators":true,
     "emitDecoratorMetadata": true,
     "moduleResolution": "node",
     "isolatedModules": false,
     "suppressImplicitAnyIndexErrors": false,
-    "lib": ["es6", "dom"],
-    "typeRoots": ["node_modules/@types"]
+    "lib": [
+      "dom",
+      "es6",
+      "es2015.collection",
+      "es2015.iterable"
+    ],
+    "typeRoots": ["node_modules/@types/"],
+    "rootDir": "src/",
+    "outDir": "lib/"
   },
+
+  "include": [
+    "src/**/*.ts"
+  ],
 
   "exclude": [
     "node_modules",

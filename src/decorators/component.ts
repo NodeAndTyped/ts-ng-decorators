@@ -1,18 +1,26 @@
-import {IComponentProperties, IClassAnnotationDecorator} from "../interfaces/interfaces";
 /**
+ * @module decorators
+ */ /** */
+import {IComponentProperties, IClassDecorator, Constructor} from "../interfaces/interfaces";
+import Metadata from "../utils/Metadata";
+/**
+ * Compoment wrap a class into Angular Component. Equivalent to :
  *
- * @param moduleName
+ * ```
+ * angular.module('test').component("selector", {});
+ * ```
  * @param settings
  * @returns {(target:any)=>void}
+ * @decorator
  */
 export function Component(
     settings:  IComponentProperties
-): IClassAnnotationDecorator {
+): IClassDecorator {
 
-    return (target: any): void => {
+    return <T extends Constructor<{}>>(target: T): void => {
 
-        target.$ngType = "component";
-        target.$settings = settings;
+        Metadata.set("ng:type", "component", target);
+        Metadata.set("ng:settings", settings, target);
 
     };
 }

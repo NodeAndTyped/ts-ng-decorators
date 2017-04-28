@@ -1,9 +1,9 @@
+/**
+ * @module decorators
+ */ /** */
 
-import * as angular from "angular";
-
-import {pushBuilder} from "../utils/moduleFactory";
-import {IClassAnnotationDecorator} from "../interfaces/interfaces";
-import {getFuncName} from "../utils/getFuncName";
+import Metadata from "../utils/Metadata";
+import {IClassDecorator, Constructor} from "../interfaces/interfaces";
 /**
  * Directive annotation to create an angular directive.
  * @param name
@@ -11,13 +11,12 @@ import {getFuncName} from "../utils/getFuncName";
  */
 export function Provider(
     name: string
-): any {
-    return (target: any): void => {
+): IClassDecorator {
 
-        target.$ngType = "providers";
-        target.$settings = {name: name};
+    return <T extends Constructor<{}>>(target: T): void => {
 
-        // pushBuilder(moduleName, app => app.provider(className || getFuncName(target), new target()));
+        Metadata.set("ng:type", "providers", target);
+        Metadata.set("ng:settings",  {name: name}, target);
 
     };
 }

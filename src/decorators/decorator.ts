@@ -1,16 +1,20 @@
+/**
+ * @module decorators
+ */ /** */
 
-import {IClassAnnotationDecorator} from "../interfaces/interfaces";
+import {IClassDecorator, Constructor} from "../interfaces/interfaces";
+import Metadata from "../utils/Metadata";
 /**
  * Annotation at.decorator to create decorator for angular.
  * @returns {function(any): void}
  * @param provider
  */
-export function Decorator(provider: string): IClassAnnotationDecorator {
+export function Decorator(provider: string): IClassDecorator {
 
-    return (target: any): void => {
+    return <T extends Constructor<{}>> (target: T) => {
 
-        target.constructor.$ngType = "decorator";
-        target.constructor.$settings = {provider};
+        Metadata.set("ng:type", "decorator", target);
+        Metadata.set("ng:settings", {provider}, target);
 
     };
 }

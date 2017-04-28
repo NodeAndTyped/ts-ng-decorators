@@ -1,16 +1,32 @@
+/**
+ * @module decorators
+ */ /** */
 
-import {instantiate} from "../utils/instantiate";
-import {IClassAnnotationDecorator} from "../interfaces/interfaces";
-import {getFuncName} from "../utils/getFuncName";
+import {IClassDecorator, Constructor} from "../interfaces/interfaces";
+import {getFuncName} from "../utils";
+import Metadata from "../utils/Metadata";
+
 /**
  * Annotation service to create an angular Service.
  * @param name
- * @returns {IClassAnnotationDecorator}
+ * @returns {IClassDecorator}
+ * @constructor
  */
-export function Service(name?: string): IClassAnnotationDecorator {
+export function Service(name?: string): IClassDecorator {
 
-    return (target) => {
-        target.constructor.$ngType = "service";
-        target.constructor.$settings = {name: name || getFuncName(target)};
-    }
+    return <T extends Constructor<{}>>(target: T): void => {
+
+        Metadata.set("ng:type", "service", target);
+        Metadata.set("ng:settings",  {name: name || getFuncName(target)}, target);
+
+    };
+}
+/**
+ * Annotation service to create an angular Service.
+ * @param name
+ * @returns {IClassDecorator}
+ * @constructor
+ */
+export function Injectable(name?: string): IClassDecorator {
+    return Service(name);
 }

@@ -1,18 +1,22 @@
-import {IDirectiveProperties, IClassAnnotationDecorator} from "../interfaces/interfaces";
+/**
+ * @module decorators
+ */ /** */
+
+import {IDirectiveProperties, IClassDecorator, Constructor} from "../interfaces/interfaces";
+import Metadata from "../utils/Metadata";
 
 /**
  * Directive annotation to create an angular directive.
- * @param moduleName
  * @param settings
  * @returns {function(any): void}
  */
 export function Directive(
     settings: IDirectiveProperties
-): IClassAnnotationDecorator {
-    return (target: any): void => {
+): IClassDecorator {
+    return <T extends Constructor<{}>> (target: T) => {
 
-        target.$ngType = "directive";
-        target.$settings = settings;
+        Metadata.set("ng:type", "directive", target);
+        Metadata.set("ng:settings", settings, target);
 
     };
 }

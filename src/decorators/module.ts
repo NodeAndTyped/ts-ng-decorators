@@ -1,88 +1,51 @@
-
-import { Constructor} from "../interfaces/interfaces";
+/**
+ * @module decorators
+ */ /** */
+import {Constructor, IModuleSettings, IClassDecorator} from "../interfaces/interfaces";
 import {ModuleBuilder} from "../utils/ModuleBuilder";
+import {construct} from "../utils/index";
 /**
  * Type of the NgModule metadata.
  *
  * @stable
  */
-export interface NgModule {
-    /**
-     * Defines the set of injectable objects that are available in the injector
-     * of this module.
-     *
-     * ## Simple Example
-     *
-     * Here is an example of a class that can be injected:
-     *
-     * ```
-     * class Greeter {
-     *    greet(name:string) {
-     *      return 'Hello ' + name + '!';
-     *    }
-     * }
-     *
-     * @NgModule({
-     *   providers: [
-     *     Greeter
-     *   ]
-     * })
-     * class HelloWorld {
-     *   greeter:Greeter;
-     *
-     *   constructor(greeter:Greeter) {
-     *     this.greeter = greeter;
-     *   }
-     * }
-     * ```
-     */
-    providers?: any[];
-    /**
-     * Specifies a list of directives/pipes that belong to this module.
-     *
-     * ### Example
-     *
-     * ```javascript
-     * @NgModule({
-     *   declarations: [NgFor]
-     * })
-     * class CommonModule {
-     * }
-     * ```
-     */
-    declarations?: Array<any>;
-    /**
-     * Specifies a list of modules whose exported directives/pipes
-     * should be available to templates in this module.
-     * This can also contain {@link ModuleWithProviders}.
-     *
-     * ### Example
-     *
-     * ```javascript
-     * @NgModule({
-     *   imports: [CommonModule]
-     * })
-     * class MainModule {
-     * }
-     * ```
-     */
-    imports?: Array<any>;
-    /**
-     * the module name
-     */
-    name: string;
+export interface NgModule extends IModuleSettings {
+
 }
 /**
  * Annotation to create a new module based on a class Loader with @Config and @Run.
  * @returns {function(any): any}
  * @param moduleSettings
  */
-export function NgModule(moduleSettings: NgModule) {
+export function NgModule(moduleSettings: NgModule): IClassDecorator {
 
-    return <T extends Constructor<{}>>(target: T) => {
+    return <T extends Constructor<{}>> (target: T) => {
 
-        new ModuleBuilder(target, moduleSettings);
+        const module = new ModuleBuilder(target, moduleSettings);
 
-        return target;
-    }
+        // save a reference to the original constructor
+        const original = target;
+
+        // the new constructor behaviour
+        const extended: any = function (...args) {
+            this.toString = () => module.name;
+            return construct(original, args);
+        };
+
+        // copy prototype so intanceof operator still works
+        extended.prototype = original.prototype;
+
+        return extended;
+
+/*
+        TODO change when typedoc support typescript v2.2.0
+        return class extends Base {
+            constructor(...args){
+                super(...args);
+            }
+            toString() {
+                return module.name;
+            }
+        };*/
+    };
 }

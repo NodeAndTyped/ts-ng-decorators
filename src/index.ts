@@ -1,14 +1,8 @@
-export * from "./constants/directiveProperties";
-export * from "./decorators/component";
-export * from "./decorators/config";
-export * from "./decorators/controller";
-export * from "./decorators/decorator";
-export * from "./decorators/directive";
-export * from "./decorators/enumerable";
-export * from "./decorators/factory";
-export * from "./decorators/module";
-export * from "./decorators/run";
-export * from "./decorators/service";
-export * from "./decorators/inject";
-export * from "./decorators/Provider";
+/**
+ * @module decorators
+ */ /** */
+/**
+ * export decorators module
+ */
+export * from "./decorators";
 export * from "./interfaces/interfaces";

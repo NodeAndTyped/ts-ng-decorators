@@ -1,29 +1,94 @@
+/**
+ *
+ * @module interfaces
+ * @preferred
+ */ /** */
+
 /* tslint:disable:no-any */
-export interface IClassAnnotationDecorator {
-    (target: any): void;
-    (t: any, key: string, index: number | TypedPropertyDescriptor<any>): any;
+
+/**
+ * Type of the IModuleSettings metadata.
+ *
+ * @stable
+ */
+export interface IModuleSettings {
+    /**
+     * Defines the set of injectable objects that are available in the injector
+     * of this module.
+     *
+     * ## Simple Example
+     *
+     * Here is an example of a class that can be injected:
+     *
+     * ```
+     * class Greeter {
+     *    greet(name:string) {
+     *      return 'Hello ' + name + '!';
+     *    }
+     * }
+     *
+     *  @NgModule({
+     *   providers: [
+     *     Greeter
+     *   ]
+     * })
+     * class HelloWorld {
+     *   greeter:Greeter;
+     *
+     *   constructor(greeter:Greeter) {
+     *     this.greeter = greeter;
+     *   }
+     * }
+     * ```
+     */
+    providers?: any[];
+    /**
+     * Specifies a list of directives/pipes that belong to this module.
+     *
+     * ### Example
+     *
+     * ```
+     *  @NgModule({
+     *   declarations: [NgFor]
+     * })
+     * class CommonModule {
+     * }
+     * ```
+     */
+    declarations?: Array<any>;
+    /**
+     * Specifies a list of modules whose exported directives/pipes
+     * should be available to templates in this module.
+     * This can also contain {@link ModuleWithProviders}.
+     *
+     * ### Example
+     *
+     * ```
+     *  @NgModule({
+     *   imports: [CommonModule]
+     * })
+     * class MainModule {
+     * }
+     * ```
+     */
+    imports?: Array<any>;
+    /**
+     * the module name
+     */
+    name: string;
 }
 
-export interface IInjectAnnotation {
-    (...args: any[]): IClassAnnotationDecorator;
+export interface IClassDecorator {
+    <T extends Constructor<{}>>(target: T): any;
 }
 
-export interface IAngularAnnotation {
-    (name?: string): IClassAnnotationDecorator;
+export interface IMethodDecorator {
+    <T extends Constructor<{}>>(target: T, key: string, index: number | TypedPropertyDescriptor<T>): TypedPropertyDescriptor<T>;
 }
 
-export interface IDirectiveAnnotation {
-    (settings: IDirectiveProperties): IClassAnnotationDecorator;
+export interface IParamsDecorator {
+    <T extends Constructor<{}>>(target: T, key: string, index: number): any;
 }
-
-export interface IComponentAnnotation {
-    (settings: IComponentProperties): IClassAnnotationDecorator;
-}
-
-export interface IDecoratorAnnotation {
-    (provider: string): IClassAnnotationDecorator;
-}
-
 
 export interface IDirectiveProperties extends angular.IDirective {
     selector: string;
@@ -39,27 +104,29 @@ export interface IComponentProperties extends angular.IComponentOptions {
 
 export type Constructor<T> = new(...args: any[]) => T;
 
-
+export interface IInjectable {
+    $inject: any[];
+}
 
 /**
- * To create a Pipe, you must implement this interface.
+ * To create a Filter, you must implement this interface.
  *
  * Angular invokes the `transform` method with the value of a binding
  * as the first argument, and any parameters as the second argument in list form.
  *
  * ## Syntax
  *
- * `value | pipeName[:arg0[:arg1...]]`
+ * `value | filterName[:arg0[:arg1...]]`
  *
- * ### Example ([live demo](http://plnkr.co/edit/f5oyIked9M2cKzvZNKHV?p=preview))
+ * ### Example
  *
- * The `RepeatPipe` below repeats the value as many times as indicated by the first argument:
+ * The `RepeatFilter` below repeats the value as many times as indicated by the first argument:
  *
  * ```
- * import {Pipe, PipeTransform} from '@angular/core';
+ * import {Filter, IFilterTransform} from 'ts-ng-decorators';
  *
- * @Pipe({name: 'repeat'})
- * export class RepeatPipe implements PipeTransform {
+ *  @Filter({name: 'repeat'})
+ * export class RepeatFilter implements IFilterTransform {
  *   transform(value: any, times: number) {
  *     return value.repeat(times);
  *   }

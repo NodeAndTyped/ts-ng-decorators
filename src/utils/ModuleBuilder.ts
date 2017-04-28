@@ -1,14 +1,33 @@
-import * as angular from "angular";
-import {getFuncName} from "./getFuncName";
-import {IDirectiveProperties, IComponentProperties, Constructor} from "../interfaces/interfaces";
+/**
+ * @module utils
+ */ /** */
 
+import * as angular from "angular";
+import {getFuncName} from "./";
+import {
+    IDirectiveProperties, IComponentProperties, Constructor, IInjectable,
+    IModuleSettings
+} from "../interfaces/interfaces";
+import Metadata from "./Metadata";
+/**
+ * ModuleBuilder provide api to convert the class annotated by the decorators onto Angular features.
+ */
 export class ModuleBuilder {
     /**
      *
      */
     private module: angular.IModule;
+    /**
+     *
+     */
+    private moduleName: string;
 
-    constructor(private target: any, private moduleSettings: any) {
+    /**
+     *
+     * @param target
+     * @param moduleSettings
+     */
+    constructor(private target: Constructor<any>, private moduleSettings: IModuleSettings) {
 
         this.buildName()
             .buildDependencies()
@@ -17,34 +36,52 @@ export class ModuleBuilder {
     }
 
     /**
-     *
+     * Build the module name from his class name or from the name set in the configuration.
+     * @returns {ModuleBuilder}
      */
     private buildName() {
-        this.target["$moduleName"] = this.moduleSettings.name || getFuncName(this.target);
+
+        this.moduleName = this.moduleSettings.name || getFuncName(this.target);
+
+        Metadata.set("ng:module:name", this.moduleName, this.target);
+
         return this;
     }
 
     /**
-     *
+     * Build all Angular dependencies and NgModules appended to the class annotated by `@NgModule()`.
+     * @see decorators.NgModule
+     * @returns {ModuleBuilder}
      */
     private buildDependencies() {
-        const dependencies = this.moduleSettings.imports.map((s: any) => typeof s === "string" || !s ? s : s["$moduleName"]);
-        this.module = angular.module(this.target["$moduleName"], dependencies);
+
+        const dependencies = this.moduleSettings.imports.map((s: any) =>
+            typeof s === "string" || !s ? s : s.toString()
+        );
+
+        this.module = angular.module(this.moduleName, dependencies);
         return this;
     }
 
     /**
-     *
+     * Build all class along his metadata and convert it to his corresponding Angular feature.
+     * @returns {ModuleBuilder}
      */
     private buildFeatures() {
 
         []
             .concat(
-                (this.moduleSettings.providers || []),
+                (this.moduleSettings.providers || []),
                 (this.moduleSettings.declarations || [])
             )
-            .forEach(target => this[target.$ngType](target, target.settings)
-
+            .map(target => ({
+                    target,
+                    type: Metadata.get("ng:type", target),
+                    settings: Metadata.get("ng:settings", target),
+                })
+            )
+            .forEach(meta =>
+                this[meta.type](meta.target, meta.settings)
             );
 
         return this;
@@ -56,67 +93,74 @@ export class ModuleBuilder {
     private contruct() {
         const target = this.target;
         const instance = new target(this);
+        const configs = Metadata.get("ng:module:configs", target) || [];
+        const runs = Metadata.get("ng:module:runs", target) || [];
 
-        if (target["$runMethods"]) {
-
-            const apply = (methodName) => {
-                let method = instance[methodName];
-                let run = (...args) => {
-                    return method.apply(instance, args);
-                };
-
-                run.$inject = method.$inject;
-                this.module.run(run);
+        const applyConfig = (methodName) => {
+            let method = instance[methodName];
+            let config = (...args) => {
+                return method.apply(instance, args);
             };
 
-            angular.forEach(target["$runMethods"], apply);
+            config.$inject = method.$inject;
+            this.module.config(config);
+        };
 
-        }
-
-        if (target["$configMethods"]) {
-
-            const apply = (methodName) => {
-                let method = instance[methodName];
-                let config = (...args) => {
-                    return method.apply(instance, args);
-                };
-
-                config.$inject = method.$inject;
-                this.module.config(config);
+        const applyRun = (methodName) => {
+            let method = instance[methodName];
+            let run = (...args) => {
+                return method.apply(instance, args);
             };
 
-            angular.forEach(target["$configMethods"], apply);
-        }
+            run.$inject = method.$inject;
+            this.module.run(run);
+        };
 
+        configs.forEach(methodName => applyConfig(methodName));
+        runs.forEach(methodName => applyRun(methodName));
+
+        return this;
     }
 
     /**
-     *
+     * Convert the class to the `angular.module().constant()` feature.
+     * @see {@link Constant} annotation.
+     * @param target
+     * @param settings
      * @returns {ModuleBuilder}
      */
     public constant(target: Constructor<any>, settings) {
-        return this.module.constant(
+
+        this.module.constant(
             settings.name,
             new target()
         );
+
+        return this;
     }
 
     /**
-     *
+     * Convert the class to the `angular.module().value()` feature.
+     * @see {@link Value} annotation.
+     * @param target
+     * @param settings
      * @returns {ModuleBuilder}
      */
     public value(target: Constructor<any>, settings) {
-        return this.module.value(
+        this.module.value(
             settings.name,
             new target()
         );
+
+        return this;
     }
 
     /**
-     *
+     * Convert the class to the `angular.module().constant()` feature.
+     * @see {@link Enumerable} annotation.
      * @param target
      * @param settings
-     * @returns {IModule}
+     * @returns {ModuleBuilder}
      */
     public enumerable(target: Constructor<any>, settings) {
 
@@ -132,56 +176,72 @@ export class ModuleBuilder {
             obj[$key] = target[$key] = value;
         }
 
-        return this.module.constant(
+        this.module.constant(
             settings.name,
             obj
         );
+
+        return this;
     }
 
     /**
-     *
+     * Convert the class to the `angular.module().controller()` feature.
+     * @see {@link Controller} annotation.
      * @param target
      * @param settings
-     * @returns {any}
+     * @returns {ModuleBuilder}
      */
     controller(target: Constructor<any>, settings) {
-        return this.module.controller(
+
+        this.module.controller(
             settings.name,
             target
         );
+
+        return this;
     }
 
     /**
-     *
+     * Convert the class to the `angular.module().provider()` feature.
+     * @see {@link Provider} annotation.
      * @param target
      * @param settings
-     * @returns {any}
+     * @returns {ModuleBuilder}
      */
     provider(target: Constructor<any>, settings) {
-        return this.module.provider(
+
+        this.module.provider(
             settings.name,
             target
         );
+
+        return this;
     }
 
     /**
-     *
+     * Convert the class to the `angular.module().service()` feature.
+     * @see {@link Injectable} annotation.
+     * @see {@link Service} annotation.
      * @param target
      * @param settings
-     * @returns {any}
+     * @returns {ModuleBuilder}
      */
     service(target: Constructor<any>, settings) {
-        return this.module.provider(
+
+        this.module.provider(
             settings.name,
             target
         );
+
+        return this;
     }
 
     /**
-     *
+     * Convert the class to the `angular.module().factory()` feature.
+     * @see {@link Factory} annotation.
      * @param target
      * @param settings
-     * @returns {any}
+     * @returns {ModuleBuilder}
      */
     factory(target: Constructor<any>, settings) {
 
@@ -193,87 +253,68 @@ export class ModuleBuilder {
             _factory.$inject = target.$inject.slice(0);
         }
 
-        return this.module.factory(
+        this.module.factory(
             settings.name,
             _factory
         );
+
+        return this;
     }
 
     /**
-     *
+     * Convert the class to the `angular.module().directive()` feature.
+     * @see {@link Directive} annotation.
      * @param target
      * @param settings
-     * @returns {IDirectiveProperties}
+     * @returns {ModuleBuilder}
      */
-    directive(target: Constructor<any>, settings) {
-        let config: IDirectiveProperties;
-
-        /*const ctrlName: string = angular.isString(settings.controller)
-            ? settings.controller.split(" ").shift()
-            : getFuncName(target);
-
-        if (ctrlName) {
-            this.module.controller(ctrlName, target);
-        }*/
+    directive(target: Constructor<any>, settings: IDirectiveProperties) {
 
         // Retrocompatibilty
-
         if ((<any> settings).bindings) {
             (<any> settings).scope = {};
         }
 
-        config = settings.reduce((config: angular.IDirective | angular.IComponentOptions, property: string) => {
-            return angular.isDefined(target[property])
-                ? angular.extend(config, {[property]: target[property]})
-                : config; /* istanbul ignore next */
+        if (this.hasBindings(target)) {
+            settings.bindings = Object.assign({}, settings.bindings || {}, this.getBindings(target));
+        }
 
-        }, angular.extend({}, settings, {
-            controller: target
-        }));
+        settings.controller = target;
 
-        return this.module.directive(
+        this.module.directive(
             settings.selector,
-            config as any
+            settings as any
         );
+
+        return this;
     }
 
     /**
-     *
+     * Convert the class to the `angular.module().component()` feature.
+     * @see {@link Component} annotation.
      * @param target
      * @param settings
-     * @returns {IComponentProperties}
+     * @returns {ModuleBuilder}
      */
-    component(target: Constructor<any>, settings) {
-        let config: IComponentProperties;
+    component(target: Constructor<any>, settings: IComponentProperties) {
 
-        /* const ctrlName: string = angular.isString(settings.controller)
-            ? settings.controller.split(" ").shift()
-            : undefined;
+        settings.bindings = Object.assign({}, settings.bindings || {}, this.getBindings(target));
+        settings.controller = target;
 
-        if (ctrlName) {
-            this.module.controller(getFuncName(target), target);
-        }*/
-
-        config = settings.reduce((config: angular.IDirective | angular.IComponentOptions, property: string) => {
-            return angular.isDefined(target[property])
-                ? angular.extend(config, {[property]: target[property]})
-                : config; /* istanbul ignore next */
-
-        }, angular.extend({}, settings, {
-            controller: target
-        }));
-
-        return this.module.component(
+        this.module.component(
             settings.selector,
-            config
+            settings
         );
+
+        return this;
     }
 
     /**
-     *
+     * Convert the class to the `angular.module().filter()` feature.
+     * @see {@link Filter} annotation.
      * @param target
      * @param settings
-     * @returns {IModule}
+     * @returns {ModuleBuilder}
      */
     filter(target: Constructor<any>, settings) {
 
@@ -286,18 +327,24 @@ export class ModuleBuilder {
             _filter.$inject = target.$inject.slice(0);
         }
 
-        return this.module.filter(
+        this.module.filter(
             settings.name,
             _filter
         );
+
+        return this;
     }
 
     /**
-     *
+     * Create the Angular decorator configuration from @Decorator() annotation.
+     * @see {@link Decorator} annotation.
+     * @param target
+     * @param settings
+     * @returns {ModuleBuilder}
      */
     decorator(target: Constructor<any>, settings) {
 
-        return this.module.config([
+        this.module.config([
             "$provide",
             function($provide: angular.auto.IProvideService): void {
 
@@ -316,21 +363,56 @@ export class ModuleBuilder {
                 }
 
                 $provide.decorator(settings.provider, delegation);
-            }])
+            }]);
+
+        return this;
     }
 
     /**
-     *
+     * Convert Input or Output metadata to bindings objects.
+     * @param target
+     * @returns {{}}
+     */
+    private getBindings(target: Constructor<any>) {
+
+        const metas = Metadata.get("ng:bindings", target) || [];
+        const bindings = {};
+
+        metas.forEach(meta =>
+            bindings[meta.name] = `${meta.type}${meta.mapFrom}`
+        );
+
+        return bindings;
+    }
+
+    /**
+     * Check if bindings annotation exists on the class.
+     * @param target
+     * @returns {boolean}
+     */
+    private hasBindings(target: Constructor<any>) {
+        return Metadata.has("ng:bindings", target);
+    }
+    /**
+     * Copy the injected metadata field.
      * @param target
      * @param args
      * @returns {any}
      */
-    private static attachInjects(target: Constructor<any>, ...args: any[]): any {
+    private static attachInjects(target: Constructor<IInjectable>, ...args: any[]): Constructor<IInjectable> {
 
         (target.$inject || []).forEach((item: string, index: number) => {
-            target.prototype[(item.charAt(0) === "$" ? "$" : "$$") + item] = args[index];
+            target.prototype[(item.charAt(0) === "$" ? "$" : "$$") + item] = "" + args[index];
         });
 
         return target;
+    }
+
+    /**
+     * Return the module name.
+     * @returns {string}
+     */
+    public get name() {
+        return this.moduleName;
     }
 }
